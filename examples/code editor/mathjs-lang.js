@@ -5,7 +5,7 @@
  *
  * @param {Object} math A mathjs instance
  */
-export function mathjsLang(math) {
+export function mathjsLang(math, context) {
   function wordRegexp(words) {
     return new RegExp('^((' + words.join(')|(') + '))\\b')
   }

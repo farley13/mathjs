@@ -14,6 +14,7 @@ const digits = 14
 
 const math = create(all)
 const parser = math.parser()
+const context = new Map();
 const editorDOM = document.querySelector('#editor')
 const resultsDOM = document.querySelector('#result')
 
@@ -40,7 +41,7 @@ let startState = EditorState.create({
   doc,
   extensions: [
     basicSetup,
-    StreamLanguage.define(mathjsLang(math)),
+    StreamLanguage.define(mathjsLang(math, context)),
     EditorView.lineWrapping,
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
@@ -69,10 +70,10 @@ let editor = new EditorView({
  * @param {string} expression - The expression to evaluate.
  * @returns {any} The result of the evaluation, or the error message if an error occurred.
 */
-function calc(expression) {
+function calc(expression, scope) {
   let result
   try {
-    result = parser.evaluate(expression)
+    result = parser.evaluate(expression, scope)
   } catch (error) {
     result = error.toString()
   }
@@ -104,10 +105,11 @@ const formatResult = math.typed({
  * @returns {Array<{from: number, to: number, source: string, outputs: any, visible: boolean}>} An array of processed expressions,
  *   where each object has additional `outputs` and `visible` properties.
  */
-function processExpressions(expressions) {
+function processExpressions(expressions, scope) {
   parser.clear()
+  scope.clear()
   return expressions.map(expression => {
-    const result = calc(expression.source)
+    const result = calc(expression.source, scope)
     const outputs = formatResult(result)
     // Determine visibility based on the result type:
     // - Undefined results are hidden.
@@ -139,7 +141,7 @@ function updateResults() {
   const expressions = getExpressions(editor.state.doc.toString());
 
   // Evaluate and analyze the expressions.
-  processedExpressions = processExpressions(expressions);
+  processedExpressions = processExpressions(expressions, context);
 
   // Generate HTML to display the results.
   const resultsHtml = resultsToHTML(processedExpressions);
