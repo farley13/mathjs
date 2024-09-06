@@ -5,7 +5,10 @@
  *
  * @param {Object} math A mathjs instance
  */
-export function mathjsLang(math, context) {
+
+
+
+export function mathjsLang(math, scope) {
   function wordRegexp(words) {
     return new RegExp('^((' + words.join(')|(') + '))\\b')
   }
@@ -189,6 +192,19 @@ export function mathjsLang(math, context) {
     let word = context.matchBefore(/\w*/)
     if (word.from == word.to && !context.explicit) return null
     let options = []
+
+    // newly defined variables and functions
+    for (const [key, value] of scope) {
+      if (value.signatures) {
+        options.push({ label: key,  type: 'function', 
+          //info: value.signatures.map( s => s.toString()).join("/n"), 
+          info: "function(x, y)",
+          boost: 10 })
+      } else {
+        options.push({ label: key, type: 'variable', boost: 10 })
+      }      
+    }
+
     mathFunctions.forEach((func) => options.push({ label: func, type: 'function' }))
 
     mathPhysicalConstants.forEach((constant) => options.push({ label: constant, type: 'constant' }))

@@ -1,11 +1,14 @@
 import './style.css'
 import 'github-markdown-css/github-markdown.css'
 import 'katex/dist/katex.min.css'
-import { StreamLanguage } from '@codemirror/language'
+import { StreamLanguage, matchBrackets } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
+import { showTooltip } from "@codemirror/view"
+import {StateField} from "@codemirror/state"
+
 import { basicSetup, EditorView } from 'codemirror'
 import katex from 'katex'
-import { all, create } from 'mathjs'
+import { all, create, re } from 'mathjs'
 import getExpressions from './getExpressions'
 import { mathjsLang } from './mathjs-lang.js'
 
@@ -37,12 +40,98 @@ const doc = [
   "det([-1, 2; 3, 1])"
 ].join('\n')
 
+
+//!cursorTooltipField
+
+
+const cursorTooltipField = StateField.define({
+  create: getCursorTooltips,
+
+  update(tooltips, tr) {
+    if (!tr.docChanged && !tr.selection) return tooltips
+    return getCursorTooltips(tr.state)
+  },
+
+  provide: f => showTooltip.computeN([f], state => state.field(f))
+})
+
+//!getCursorTooltips
+
+//import {EditorState} from "@codemirror/state"
+
+function getCursorTooltips(state) {
+  return state.selection.ranges
+    .filter(range => range.empty)
+    .map(range => {
+      let line = state.doc.lineAt(range.head)
+      let text = line.number + ":" + (range.head - line.from)
+      let textToLookAt = state.doc.slice(0, range.head);
+      let reversedText = textToLookAt.toString().split("").reverse().join("");
+      let parensMatch = reversedText.match(/\(/);
+      if (parensMatch) {
+        reversedText = reversedText.slice(parensMatch.index);
+        let reverseParensMatchPrefix = reversedText.match(/\w+/);
+        if (reverseParensMatchPrefix) {
+          let parensMatchPrefix = reverseParensMatchPrefix[0].split("").reverse().join("");
+          
+          const match = matchBrackets(state, parensMatch.index, 1);
+
+          //if (match) {
+            //text = state.doc.slice(match.start.from, match.end.to)
+          //}
+          text = parensMatchPrefix;
+        }
+      }
+      return {
+        pos: range.head,
+        above: true,
+        strictSide: true,
+        arrow: true,
+        create: () => {
+          let dom = document.createElement("div")
+          dom.className = "cm-tooltip-cursor"
+          dom.textContent = text
+          return {dom}
+        }
+      }
+    })
+}
+
+//!baseTheme
+
+//import {EditorView} from "@codemirror/view"
+
+const cursorTooltipBaseTheme = EditorView.baseTheme({
+  ".cm-tooltip.cm-tooltip-cursor": {
+    backgroundColor: "#66b",
+    color: "white",
+    border: "none",
+    padding: "2px 7px",
+    borderRadius: "4px",
+    "& .cm-tooltip-arrow:before": {
+      borderTopColor: "#66b"
+    },
+    "& .cm-tooltip-arrow:after": {
+      borderTopColor: "transparent"
+    }
+  }
+})
+
+//!cursorTooltip
+
+export function cursorTooltip() {
+  return [cursorTooltipField, cursorTooltipBaseTheme]
+}
+
+
 let startState = EditorState.create({
   doc,
   extensions: [
     basicSetup,
     StreamLanguage.define(mathjsLang(math, context)),
+    cursorTooltip(),
     EditorView.lineWrapping,
+    // setup https://github.com/codemirror/website/blob/8b30aec3ce78fb62de4021917fcc67d0affbb58c/site/examples/tooltip/tooltip.ts#L64
     EditorView.updateListener.of((update) => {
       if (update.docChanged) {
         // if doc changed debounce and update results after a timeout
@@ -73,7 +162,11 @@ let editor = new EditorView({
 function calc(expression, scope) {
   let result
   try {
-    result = parser.evaluate(expression, scope)
+    result = parser.evaluate(expression)
+    //scope.clear();
+    for (const [key, value] of parser.getAllAsMap()) {
+      scope.set(key, value)
+    }
   } catch (error) {
     result = error.toString()
   }
@@ -107,7 +200,7 @@ const formatResult = math.typed({
  */
 function processExpressions(expressions, scope) {
   parser.clear()
-  scope.clear()
+  //scope.clear()
   return expressions.map(expression => {
     const result = calc(expression.source, scope)
     const outputs = formatResult(result)
