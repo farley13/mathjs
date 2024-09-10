@@ -22,6 +22,7 @@ export function mathjsLang(math, scope) {
   const identifiers = new RegExp('^[_A-Za-z\xa1-\uffff][_A-Za-z0-9\xa1-\uffff]*')
 
   const mathFunctions = []
+  const mathFunctionsHelp = new Map()
   const mathPhysicalConstants = []
   const mathIgnore = ['expr', 'type']
   const numberLiterals = [
@@ -50,6 +51,18 @@ export function mathjsLang(math, scope) {
     if (!mathIgnore.includes(expr)) {
       if (typeof math[expr] === 'function') {
         mathFunctions.push(expr)
+        const funcInstance = math[expr]
+        let syntax = funcInstance.syntax
+        if (!syntax) {
+          syntax = ""
+          let first = true
+          for (const signatureType in funcInstance.signatures) {
+            let or = first ? "" : ", \n"
+            syntax += or + expr + "(" + signatureType + ")";
+            first = false
+          }
+        }
+        mathFunctionsHelp.set(expr, syntax);
       } else if (!numberLiterals.includes(expr)) {
         mathPhysicalConstants.push(expr)
       }
@@ -70,6 +83,8 @@ export function mathjsLang(math, scope) {
 
   const units = wordRegexp(Array.from(new Set(listOfUnits)))
   const physicalConstants = wordRegexp(mathPhysicalConstants)
+
+  const userDocumentedFunctions = [];
 
   // tokenizers
   function tokenTranspose(stream, state) {
@@ -185,27 +200,31 @@ export function mathjsLang(math, scope) {
     languageData: {
       commentTokens: { line: '#' },
       autocomplete: myCompletions
-    }
+    },
+
+    generateBuiltInOptions: generateBuiltInOptions,
   }
 
   function myCompletions(context) {
     let word = context.matchBefore(/\w*/)
     if (word.from == word.to && !context.explicit) return null
-    let options = []
+    
+    const options = generateBuiltInOptions(word.text)
 
-    // newly defined variables and functions
-    for (const [key, value] of scope) {
-      if (value.signatures) {
-        options.push({ label: key,  type: 'function', 
-          //info: value.signatures.map( s => s.toString()).join("/n"), 
-          info: "function(x, y)",
-          boost: 10 })
-      } else {
-        options.push({ label: key, type: 'variable', boost: 10 })
-      }      
+    
+
+    return {
+      from: word.from,
+      options
     }
+  }
 
-    mathFunctions.forEach((func) => options.push({ label: func, type: 'function' }))
+
+function generateBuiltInOptions(wordText) {
+
+  let options = [];
+
+    mathFunctions.forEach((func) => options.push({ label: func, type: 'function' , info: mathFunctionsHelp.get(func)}))
 
     mathPhysicalConstants.forEach((constant) => options.push({ label: constant, type: 'constant' }))
 
@@ -214,7 +233,7 @@ export function mathjsLang(math, scope) {
     // units as enum
     for (const name in math.Unit.UNITS) {
       if (hasOwnPropertySafe(math.Unit.UNITS, name)) {
-        if (name.startsWith(word.text)) {
+        if (name.startsWith(wordText)) {
           options.push({ label: name, type: 'enum' })
         }
       }
@@ -224,10 +243,10 @@ export function mathjsLang(math, scope) {
         const prefixes = math.Unit.PREFIXES[name]
         for (const prefix in prefixes) {
           if (hasOwnPropertySafe(prefixes, prefix)) {
-            if (prefix.startsWith(word.text)) {
+            if (prefix.startsWith(wordText)) {
               options.push({ label: prefix, type: 'enum' })
-            } else if (word.text.startsWith(prefix)) {
-              const unitKeyword = word.text.substring(prefix.length)
+            } else if (wordText.startsWith(prefix)) {
+              const unitKeyword = wordText.substring(prefix.length)
               for (const n in math.Unit.UNITS) {
                 const fullUnit = prefix + n
                 if (hasOwnPropertySafe(math.Unit.UNITS, n)) {
@@ -246,12 +265,31 @@ export function mathjsLang(math, scope) {
       }
     }
 
-    return {
-      from: word.from,
-      options
+    // newly defined variables and functions
+    for (const [key, value] of scope) {
+      if (value.signatures) {
+        let infoHelp = "";
+        /*for (const signatureType in value.signatures) {
+          infoHelp += signatureType + signatureType + "\n";
+        } */
+        infoHelp = value.syntax;
+        options.push({ label: key,  type: 'function', 
+          info:infoHelp,
+          //info: "function(x, y)",
+          boost: 10 })
+      } else {
+        options.push({ label: key, type: 'variable', boost: 10 })
+      }      
     }
-  }
+
+    return options;
 }
+
+function addUserDocumentedFunction(nameToType) {
+  userDocumentedFunctions.push(nameToType)
+}
+}
+
 
 // helper function to safely check whether an object has a property
 // copy from the function in object.js which is ES6

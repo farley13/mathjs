@@ -26,10 +26,11 @@ let previousSelectedExpressionIndex
 let timer
 
 const doc = [
-  "round(e, 3)",
-  "atan2(3, -3) / pi",
-  "log(10000, 10)",
-  "sqrt(-4)",
+"", // "round(e, 3)",
+"", // "atan2(3, -3) / pi",
+  "log(10000, exp(10))",
+  "myFunc(a, b, c) = a * b + c",
+  /*"sqrt(-4)",
   "derivative('x^2 + x', 'x')",
   "pow([[-1, 2], [3, 1]], 2)",
   "# expressions",
@@ -37,7 +38,7 @@ const doc = [
   "12.7 cm to inch",
   "sin(45 deg) ^ 2",
   "9 / 3 + 2i",
-  "det([-1, 2; 3, 1])"
+  "det([-1, 2; 3, 1])"*/
 ].join('\n')
 
 
@@ -65,21 +66,37 @@ function getCursorTooltips(state) {
     .map(range => {
       let line = state.doc.lineAt(range.head)
       let text = line.number + ":" + (range.head - line.from)
-      let textToLookAt = state.doc.slice(0, range.head);
-      let reversedText = textToLookAt.toString().split("").reverse().join("");
-      let parensMatch = reversedText.match(/\(/);
-      if (parensMatch) {
-        reversedText = reversedText.slice(parensMatch.index);
-        let reverseParensMatchPrefix = reversedText.match(/\w+/);
-        if (reverseParensMatchPrefix) {
-          let parensMatchPrefix = reverseParensMatchPrefix[0].split("").reverse().join("");
-          
-          const match = matchBrackets(state, parensMatch.index, 1);
-
-          //if (match) {
-            //text = state.doc.slice(match.start.from, match.end.to)
-          //}
-          text = parensMatchPrefix;
+      let start = range.head;
+      let found = false
+      while (start < range.head + 10000 && !found) {
+        let textToLookAt = state.doc.slice(start, 10000);
+        //let reversedText = textToLookAt.toString().split("").reverse().join("");
+        // BUG!! We should look for the next closing parens and then find it's matching open parens
+        // then find the function name before the open parens
+        let parensMatch = textToLookAt.toString().match(/\)/); // look backwards for the first open paren
+        if (parensMatch) {
+          const parensIndex = start + parensMatch.index + 1;
+          const match = matchBrackets(state, parensIndex, -1);
+          if (match && match.matched) { 
+            let reversedText = state.doc.slice(Math.max(start - 100, 0), match.end.to).toString().split("").reverse().join("");
+            let reverseParensMatchPrefix = reversedText.match(/\w+/); // find the text before the open paren - this is the function name  
+            if (reverseParensMatchPrefix) {
+              let parensMatchPrefix = reverseParensMatchPrefix[0].split("").reverse().join("");
+              if ((match.end.from - parensMatchPrefix.length) < range.head) {
+                text = parensMatchPrefix;
+                const options = mathjsLang(math, context).generateBuiltInOptions(text);
+                for (const entry of options) {
+                  if (entry.label === text) {
+                    text = entry.info;
+                  }
+                }
+                found = true;
+              }
+            }
+          }
+          start = parensIndex;
+        } else{
+          start += 10000;
         }
       }
       return {
