@@ -26,10 +26,13 @@ let previousSelectedExpressionIndex
 let timer
 
 const doc = [
-"", // "round(e, 3)",
-"", // "atan2(3, -3) / pi",
-  "log(10000, exp(10))",
-  "myFunc(a, b, c) = a * b + c",
+"round(e, 3)",
+ "atan2(3, -3 / pi",
+ "a = 2",
+ "b = 3",
+  "c = 4",
+ // "log(10000, exp(10))",
+ // "myFunc(a, b, c) = a * b + c",
   /*"sqrt(-4)",
   "derivative('x^2 + x', 'x')",
   "pow([[-1, 2], [3, 1]], 2)",
@@ -56,7 +59,10 @@ const cursorTooltipField = StateField.define({
   provide: f => showTooltip.computeN([f], state => state.field(f))
 })
 
+
+
 //!getCursorTooltips
+
 
 //import {EditorState} from "@codemirror/state"
 
@@ -65,7 +71,7 @@ function getCursorTooltips(state) {
     .filter(range => range.empty)
     .map(range => {
       let line = state.doc.lineAt(range.head)
-      let text = line.number + ":" + (range.head - line.from)
+      let text ="";// line.number + ":" + (range.head - line.from)
       let start = range.head;
       let found = false
       while (start < range.head + 10000 && !found) {
@@ -84,7 +90,7 @@ function getCursorTooltips(state) {
               let parensMatchPrefix = reverseParensMatchPrefix[0].split("").reverse().join("");
               if ((match.end.from - parensMatchPrefix.length) < range.head) {
                 text = parensMatchPrefix;
-                const options = mathjsLang(math, context).generateBuiltInOptions(text);
+                const options = mathJsLangInstance.generateBuiltInOptions(text);
                 for (const entry of options) {
                   if (entry.label === text) {
                     text = entry.info;
@@ -98,6 +104,9 @@ function getCursorTooltips(state) {
         } else{
           start += 10000;
         }
+      }
+      if (!found) {
+        return null
       }
       return {
         pos: range.head,
@@ -140,13 +149,20 @@ export function cursorTooltip() {
   return [cursorTooltipField, cursorTooltipBaseTheme]
 }
 
+let mathJsLangInstance = mathjsLang(math, context);
+mathJsLangInstance.addUserDocumentedFunctions([
+  ({ label: "userAddedFunction",  type: 'function', 
+    info: "userAddedFunction(x, y)",
+    //info: "function(x, y)",
+    boost: 10 })])
 
 let startState = EditorState.create({
   doc,
   extensions: [
     basicSetup,
-    StreamLanguage.define(mathjsLang(math, context)),
+    StreamLanguage.define(mathJsLangInstance),
     cursorTooltip(),
+    mathJsLangInstance.createLinter(),
     EditorView.lineWrapping,
     // setup https://github.com/codemirror/website/blob/8b30aec3ce78fb62de4021917fcc67d0affbb58c/site/examples/tooltip/tooltip.ts#L64
     EditorView.updateListener.of((update) => {

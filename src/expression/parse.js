@@ -100,7 +100,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
     'Array | Matrix, Object': parseMultiple
   })
 
-  function parseMultiple (expressions, options = {}) {
+  function parseMultiple(expressions, options = {}) {
     const extraNodes = options.nodes !== undefined ? options.nodes : {}
 
     // parse an array or matrix with expressions
@@ -199,7 +199,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
     // note that \u is handled separately in parseStringToken()
   }
 
-  function initialState () {
+  function initialState() {
     return {
       extraNodes: {}, // current extra nodes, must be careful not to mutate
       expression: '', // current expression
@@ -220,7 +220,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @returns {string}
    * @private
    */
-  function currentString (state, length) {
+  function currentString(state, length) {
     return state.expression.substr(state.index, length)
   }
 
@@ -231,7 +231,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @returns {string}
    * @private
    */
-  function currentCharacter (state) {
+  function currentCharacter(state) {
     return currentString(state, 1)
   }
 
@@ -241,7 +241,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * reached, the function puts an empty string in c.
    * @private
    */
-  function next (state) {
+  function next(state) {
     state.index++
   }
 
@@ -250,7 +250,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {string} cNext
    * @private
    */
-  function prevCharacter (state) {
+  function prevCharacter(state) {
     return state.expression.charAt(state.index - 1)
   }
 
@@ -259,7 +259,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {string} cNext
    * @private
    */
-  function nextCharacter (state) {
+  function nextCharacter(state) {
     return state.expression.charAt(state.index + 1)
   }
 
@@ -268,7 +268,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * The token and token type are available as token and tokenType
    * @private
    */
-  function getToken (state) {
+  function getToken(state) {
     state.tokenType = TOKENTYPE.NULL
     state.token = ''
     state.comment = ''
@@ -278,7 +278,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
       // comments:
       if (currentCharacter(state) === '#') {
         while (currentCharacter(state) !== '\n' &&
-               currentCharacter(state) !== '') {
+          currentCharacter(state) !== '') {
           state.comment += currentCharacter(state)
           next(state)
         }
@@ -457,7 +457,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
   /**
    * Get next token and skip newline tokens
    */
-  function getTokenSkipNewline (state) {
+  function getTokenSkipNewline(state) {
     do {
       getToken(state)
     }
@@ -468,7 +468,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * Open parameters.
    * New line characters will be ignored until closeParams(state) is called
    */
-  function openParams (state) {
+  function openParams(state) {
     state.nestingLevel++
   }
 
@@ -476,7 +476,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * Close parameters.
    * New line characters will no longer be ignored
    */
-  function closeParams (state) {
+  function closeParams(state) {
     state.nestingLevel--
   }
 
@@ -498,10 +498,10 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @param {string} cNext  Next character
    * @return {boolean}
    */
-  parse.isAlpha = function isAlpha (c, cPrev, cNext) {
+  parse.isAlpha = function isAlpha(c, cPrev, cNext) {
     return parse.isValidLatinOrGreek(c) ||
-        parse.isValidMathSymbol(c, cNext) ||
-        parse.isValidMathSymbol(cPrev, c)
+      parse.isValidMathSymbol(c, cNext) ||
+      parse.isValidMathSymbol(cPrev, c)
   }
 
   /**
@@ -509,7 +509,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @param {string} c
    * @return {boolean}
    */
-  parse.isValidLatinOrGreek = function isValidLatinOrGreek (c) {
+  parse.isValidLatinOrGreek = function isValidLatinOrGreek(c) {
     return /^[a-zA-Z_$\u00C0-\u02AF\u0370-\u03FF\u2100-\u214F]$/.test(c)
   }
 
@@ -528,10 +528,10 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @param {string} low
    * @return {boolean}
    */
-  parse.isValidMathSymbol = function isValidMathSymbol (high, low) {
+  parse.isValidMathSymbol = function isValidMathSymbol(high, low) {
     return /^[\uD835]$/.test(high) &&
-        /^[\uDC00-\uDFFF]$/.test(low) &&
-        /^[^\uDC55\uDC9D\uDCA0\uDCA1\uDCA3\uDCA4\uDCA7\uDCA8\uDCAD\uDCBA\uDCBC\uDCC4\uDD06\uDD0B\uDD0C\uDD15\uDD1D\uDD3A\uDD3F\uDD45\uDD47-\uDD49\uDD51\uDEA6\uDEA7\uDFCC\uDFCD]$/.test(low)
+      /^[\uDC00-\uDFFF]$/.test(low) &&
+      /^[^\uDC55\uDC9D\uDCA0\uDCA1\uDCA3\uDCA4\uDCA7\uDCA8\uDCAD\uDCBA\uDCBC\uDCC4\uDD06\uDD0B\uDD0C\uDD15\uDD1D\uDD3A\uDD3F\uDD45\uDD47-\uDD49\uDD51\uDEA6\uDEA7\uDFCC\uDFCD]$/.test(low)
   }
 
   /**
@@ -540,7 +540,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @param {number} nestingLevel
    * @return {boolean}
    */
-  parse.isWhitespace = function isWhitespace (c, nestingLevel) {
+  parse.isWhitespace = function isWhitespace(c, nestingLevel) {
     // TODO: also take '\r' carriage return as newline? Or does that give problems on mac?
     return c === ' ' || c === '\t' || (c === '\n' && nestingLevel > 0)
   }
@@ -552,7 +552,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @param {string} cNext
    * @return {boolean}
    */
-  parse.isDecimalMark = function isDecimalMark (c, cNext) {
+  parse.isDecimalMark = function isDecimalMark(c, cNext) {
     return c === '.' && cNext !== '/' && cNext !== '*' && cNext !== '^'
   }
 
@@ -561,7 +561,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @param {string} c   a string with one character
    * @return {boolean}
    */
-  parse.isDigitDot = function isDigitDot (c) {
+  parse.isDigitDot = function isDigitDot(c) {
     return ((c >= '0' && c <= '9') || c === '.')
   }
 
@@ -570,7 +570,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @param {string} c   a string with one character
    * @return {boolean}
    */
-  parse.isDigit = function isDigit (c) {
+  parse.isDigit = function isDigit(c) {
     return (c >= '0' && c <= '9')
   }
 
@@ -579,10 +579,10 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @param {string} c   a string with one character
    * @return {boolean}
    */
-  parse.isHexDigit = function isHexDigit (c) {
+  parse.isHexDigit = function isHexDigit(c) {
     return ((c >= '0' && c <= '9') ||
-            (c >= 'a' && c <= 'f') ||
-            (c >= 'A' && c <= 'F'))
+      (c >= 'a' && c <= 'f') ||
+      (c >= 'A' && c <= 'F'))
   }
 
   /**
@@ -590,7 +590,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseStart (expression, extraNodes) {
+  function parseStart(expression, extraNodes) {
     const state = initialState()
     Object.assign(state, { expression, extraNodes })
     getToken(state)
@@ -620,7 +620,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseBlock (state) {
+  function parseBlock(state) {
     let node
     const blocks = []
     let visible
@@ -673,7 +673,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseAssignment (state) {
+  function parseAssignment(state) {
     let name, args, value, valid
 
     const node = parseConditional(state)
@@ -727,7 +727,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseConditional (state) {
+  function parseConditional(state) {
     let node = parseLogicalOr(state)
 
     while (state.token === '?') { // eslint-disable-line no-unmodified-loop-condition
@@ -761,7 +761,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseLogicalOr (state) {
+  function parseLogicalOr(state) {
     let node = parseLogicalXor(state)
 
     while (state.token === 'or') { // eslint-disable-line no-unmodified-loop-condition
@@ -777,7 +777,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseLogicalXor (state) {
+  function parseLogicalXor(state) {
     let node = parseLogicalAnd(state)
 
     while (state.token === 'xor') { // eslint-disable-line no-unmodified-loop-condition
@@ -793,7 +793,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseLogicalAnd (state) {
+  function parseLogicalAnd(state) {
     let node = parseBitwiseOr(state)
 
     while (state.token === 'and') { // eslint-disable-line no-unmodified-loop-condition
@@ -809,7 +809,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseBitwiseOr (state) {
+  function parseBitwiseOr(state) {
     let node = parseBitwiseXor(state)
 
     while (state.token === '|') { // eslint-disable-line no-unmodified-loop-condition
@@ -825,7 +825,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseBitwiseXor (state) {
+  function parseBitwiseXor(state) {
     let node = parseBitwiseAnd(state)
 
     while (state.token === '^|') { // eslint-disable-line no-unmodified-loop-condition
@@ -841,7 +841,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseBitwiseAnd (state) {
+  function parseBitwiseAnd(state) {
     let node = parseRelational(state)
 
     while (state.token === '&') { // eslint-disable-line no-unmodified-loop-condition
@@ -856,7 +856,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * Parse a chained conditional, like 'a > b >= c'
    * @return {Node} node
    */
-  function parseRelational (state) {
+  function parseRelational(state) {
     const params = [parseShift(state)]
     const conditionals = []
 
@@ -890,7 +890,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseShift (state) {
+  function parseShift(state) {
     let node, name, fn, params
 
     node = parseConversion(state)
@@ -918,7 +918,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseConversion (state) {
+  function parseConversion(state) {
     let node, name, fn, params
 
     node = parseRange(state)
@@ -952,7 +952,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseRange (state) {
+  function parseRange(state) {
     let node
     const params = []
 
@@ -998,7 +998,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseAddSubtract (state) {
+  function parseAddSubtract(state) {
     let node, name, fn, params
 
     node = parseMultiplyDivide(state)
@@ -1029,7 +1029,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseMultiplyDivide (state) {
+  function parseMultiplyDivide(state) {
     let node, last, name, fn
 
     node = parseImplicitMultiplication(state)
@@ -1065,7 +1065,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseImplicitMultiplication (state) {
+  function parseImplicitMultiplication(state) {
     let node, last
 
     node = parseRule2(state)
@@ -1073,11 +1073,11 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
 
     while (true) {
       if ((state.tokenType === TOKENTYPE.SYMBOL) ||
-          (state.token === 'in' && isConstantNode(node)) ||
-          (state.tokenType === TOKENTYPE.NUMBER &&
-              !isConstantNode(last) &&
-              (!isOperatorNode(last) || last.op === '!')) ||
-          (state.token === '(')) {
+        (state.token === 'in' && isConstantNode(node)) ||
+        (state.tokenType === TOKENTYPE.NUMBER &&
+          !isConstantNode(last) &&
+          (!isOperatorNode(last) || last.op === '!')) ||
+        (state.token === '(')) {
         // parse implicit multiplication
         //
         // symbol:      implicit multiplication like '2a', '(2+3)a', 'a b'
@@ -1102,7 +1102,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseRule2 (state) {
+  function parseRule2(state) {
     let node = parseModulusPercentage(state)
     let last = node
     const tokenStates = []
@@ -1152,7 +1152,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseModulusPercentage (state) {
+  function parseModulusPercentage(state) {
     let node, name, fn, params
 
     node = parseUnary(state)
@@ -1185,7 +1185,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseUnary (state) {
+  function parseUnary(state) {
     let name, params, fn
     const operators = {
       '-': 'unaryMinus',
@@ -1213,7 +1213,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parsePow (state) {
+  function parsePow(state) {
     let node, name, fn, params
 
     node = parseLeftHandOperators(state)
@@ -1235,7 +1235,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseLeftHandOperators (state) {
+  function parseLeftHandOperators(state) {
     let node, name, fn, params
 
     node = parseCustomNodes(state)
@@ -1287,7 +1287,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseCustomNodes (state) {
+  function parseCustomNodes(state) {
     let params = []
 
     if (state.tokenType === TOKENTYPE.SYMBOL && hasOwnProperty(state.extraNodes, state.token)) {
@@ -1332,11 +1332,11 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseSymbol (state) {
+  function parseSymbol(state) {
     let node, name
 
     if (state.tokenType === TOKENTYPE.SYMBOL ||
-        (state.tokenType === TOKENTYPE.DELIMITER && state.token in NAMED_DELIMITERS)) {
+      (state.tokenType === TOKENTYPE.DELIMITER && state.token in NAMED_DELIMITERS)) {
       name = state.token
 
       getToken(state)
@@ -1371,11 +1371,11 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseAccessors (state, node, types) {
+  function parseAccessors(state, node, types) {
     let params
 
     while ((state.token === '(' || state.token === '[' || state.token === '.') &&
-        (!types || types.includes(state.token))) { // eslint-disable-line no-unmodified-loop-condition
+      (!types || types.includes(state.token))) { // eslint-disable-line no-unmodified-loop-condition
       params = []
 
       if (state.token === '(') {
@@ -1455,7 +1455,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseString (state) {
+  function parseString(state) {
     let node, str
 
     if (state.token === '"' || state.token === "'") {
@@ -1479,7 +1479,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @param {"'" | "\""} quote
    * @return {string}
    */
-  function parseStringToken (state, quote) {
+  function parseStringToken(state, quote) {
     let str = ''
 
     while (currentCharacter(state) !== '' && currentCharacter(state) !== quote) {
@@ -1525,7 +1525,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseMatrix (state) {
+  function parseMatrix(state) {
     let array, params, rows, cols
 
     if (state.token === '[') {
@@ -1563,7 +1563,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
           for (let r = 1; r < rows; r++) {
             if (params[r].items.length !== cols) {
               throw createError(state, 'Column dimensions mismatch ' +
-                  '(' + params[r].items.length + ' !== ' + cols + ')')
+                '(' + params[r].items.length + ' !== ' + cols + ')')
             }
           }
 
@@ -1595,7 +1595,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * Parse a single comma-separated row from a matrix, like 'a, b, c'
    * @return {ArrayNode} node
    */
-  function parseRow (state) {
+  function parseRow(state) {
     const params = [parseAssignment(state)]
     let len = 1
 
@@ -1617,7 +1617,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseObject (state) {
+  function parseObject(state) {
     if (state.token === '{') {
       openParams(state)
       let key
@@ -1671,7 +1671,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseNumber (state) {
+  function parseNumber(state) {
     let numberStr
 
     if (state.tokenType === TOKENTYPE.NUMBER) {
@@ -1693,7 +1693,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} node
    * @private
    */
-  function parseParentheses (state) {
+  function parseParentheses(state) {
     let node
 
     // check if it is a parenthesized expression
@@ -1723,7 +1723,7 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Node} res
    * @private
    */
-  function parseEnd (state) {
+  function parseEnd(state) {
     if (state.token === '') {
       // syntax error or unexpected end of expression
       throw createSyntaxError(state, 'Unexpected end of expression')
@@ -1748,8 +1748,12 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * Returns the column (position) where the last state.token starts
    * @private
    */
-  function col (state) {
+  function col(state) {
     return state.index - state.token.length + 1
+  }
+
+  function colTo(state) {
+    return state.index + 1;
   }
 
   /**
@@ -1759,10 +1763,11 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {SyntaxError} instantiated error
    * @private
    */
-  function createSyntaxError (state, message) {
+  function createSyntaxError(state, message) {
     const c = col(state)
     const error = new SyntaxError(message + ' (char ' + c + ')')
     error.char = c
+    error.to = colTo(state);
 
     return error
   }
@@ -1774,10 +1779,11 @@ export const createParse = /* #__PURE__ */ factory(name, dependencies, ({
    * @return {Error} instantiated error
    * @private
    */
-  function createError (state, message) {
+  function createError(state, message) {
     const c = col(state)
     const error = new SyntaxError(message + ' (char ' + c + ')')
     error.char = c
+    error.to = colTo(state);
 
     return error
   }

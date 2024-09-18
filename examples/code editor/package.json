@@ -1,8 +1,9 @@
 {
   "name": "code-editor",
-  "private": true,
+  "private": false,
   "version": "1.0.0",
-  "type": "module",
+  "type": "module", 
+  "module": "",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

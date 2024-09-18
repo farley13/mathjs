@@ -6,7 +6,9 @@
  * @param {Object} math A mathjs instance
  */
 
+import getExpressions from "./getExpressions"
 
+import {linter} from "@codemirror/lint"
 
 export function mathjsLang(math, scope) {
   function wordRegexp(words) {
@@ -203,6 +205,8 @@ export function mathjsLang(math, scope) {
     },
 
     generateBuiltInOptions: generateBuiltInOptions,
+    addUserDocumentedFunctions: addUserDocumentedFunctions,
+    createLinter: createLinter
   }
 
   function myCompletions(context) {
@@ -220,42 +224,43 @@ export function mathjsLang(math, scope) {
   }
 
 
-function generateBuiltInOptions(wordText) {
+  function generateBuiltInOptions(wordText) {
 
-  let options = [];
+    let options = [];
 
-    mathFunctions.forEach((func) => options.push({ label: func, type: 'function' , info: mathFunctionsHelp.get(func)}))
+      mathFunctions.forEach((func) => options.push({ label: func, type: 'function' , info: mathFunctionsHelp.get(func)}))
 
-    mathPhysicalConstants.forEach((constant) => options.push({ label: constant, type: 'constant' }))
+      mathPhysicalConstants.forEach((constant) => options.push({ label: constant, type: 'constant' }))
 
-    numberLiterals.forEach((number) => options.push({ label: number, type: 'variable' }))
+      numberLiterals.forEach((number) => options.push({ label: number, type: 'variable' }))
 
-    // units as enum
-    for (const name in math.Unit.UNITS) {
-      if (hasOwnPropertySafe(math.Unit.UNITS, name)) {
-        if (name.startsWith(wordText)) {
-          options.push({ label: name, type: 'enum' })
+      // units as enum
+      for (const name in math.Unit.UNITS) {
+        if (hasOwnPropertySafe(math.Unit.UNITS, name)) {
+          if (name.startsWith(wordText)) {
+            options.push({ label: name, type: 'enum' })
+          }
         }
       }
-    }
-    for (const name in math.Unit.PREFIXES) {
-      if (hasOwnPropertySafe(math.Unit.PREFIXES, name)) {
-        const prefixes = math.Unit.PREFIXES[name]
-        for (const prefix in prefixes) {
-          if (hasOwnPropertySafe(prefixes, prefix)) {
-            if (prefix.startsWith(wordText)) {
-              options.push({ label: prefix, type: 'enum' })
-            } else if (wordText.startsWith(prefix)) {
-              const unitKeyword = wordText.substring(prefix.length)
-              for (const n in math.Unit.UNITS) {
-                const fullUnit = prefix + n
-                if (hasOwnPropertySafe(math.Unit.UNITS, n)) {
-                  if (
-                    !options.includes(fullUnit) &&
-                    n.startsWith(unitKeyword) &&
-                    math.Unit.isValuelessUnit(fullUnit)
-                  ) {
-                    options.push({ label: fullUnit, type: 'enum' })
+      for (const name in math.Unit.PREFIXES) {
+        if (hasOwnPropertySafe(math.Unit.PREFIXES, name)) {
+          const prefixes = math.Unit.PREFIXES[name]
+          for (const prefix in prefixes) {
+            if (hasOwnPropertySafe(prefixes, prefix)) {
+              if (prefix.startsWith(wordText)) {
+                options.push({ label: prefix, type: 'enum' })
+              } else if (wordText.startsWith(prefix)) {
+                const unitKeyword = wordText.substring(prefix.length)
+                for (const n in math.Unit.UNITS) {
+                  const fullUnit = prefix + n
+                  if (hasOwnPropertySafe(math.Unit.UNITS, n)) {
+                    if (
+                      !options.includes(fullUnit) &&
+                      n.startsWith(unitKeyword) &&
+                      math.Unit.isValuelessUnit(fullUnit)
+                    ) {
+                      options.push({ label: fullUnit, type: 'enum' })
+                    }
                   }
                 }
               }
@@ -263,31 +268,56 @@ function generateBuiltInOptions(wordText) {
           }
         }
       }
+
+      // newly defined variables and functions
+      for (const [key, value] of scope) {
+        if (value.signatures) {
+          let infoHelp = "";
+          /*for (const signatureType in value.signatures) {
+            infoHelp += signatureType + signatureType + "\n";
+          } */
+          infoHelp = value.syntax;
+          options.push({ label: key,  type: 'function', 
+            info:infoHelp,
+            //info: "function(x, y)",
+            boost: 10 })
+        } else {
+          options.push({ label: key, type: 'variable', boost: 10 })
+        }      
+      }
+
+      userDocumentedFunctions.forEach((func) => options.push(func))
+
+      return options;
+  }
+
+  function addUserDocumentedFunctions(optionsArray) {
+    for (const nameToType of optionsArray) {
+      userDocumentedFunctions.push(nameToType)
     }
+  }
 
-    // newly defined variables and functions
-    for (const [key, value] of scope) {
-      if (value.signatures) {
-        let infoHelp = "";
-        /*for (const signatureType in value.signatures) {
-          infoHelp += signatureType + signatureType + "\n";
-        } */
-        infoHelp = value.syntax;
-        options.push({ label: key,  type: 'function', 
-          info:infoHelp,
-          //info: "function(x, y)",
-          boost: 10 })
-      } else {
-        options.push({ label: key, type: 'variable', boost: 10 })
-      }      
-    }
+  function createLinter() {
+    return linter(view => {
+      const diagnostics = []
+      //syntaxTree(view.state).cursor().iterate(node => {
+        for (const expression of getExpressions(view.state.doc.toString())) {
 
-    return options;
-}
+        if (expression.error) diagnostics.push({
+          from: expression.from,
+          to: expression.to,
+          severity: "error",
+          message: expression.error?.toString()||"unknown"
+         /* actions: [{
+            name: "Remove",
+            apply(view, from, to) { view.dispatch({changes: {from, to}}) }
+          }] */
+        })
+      }
+      return diagnostics
+    })
 
-function addUserDocumentedFunction(nameToType) {
-  userDocumentedFunctions.push(nameToType)
-}
+  }
 }
 
 
